@@ -157,6 +157,20 @@ def unpack_unsigned_64(data: bytes) -> int:
     return unpack("!Q", data)[0]
 
 
+def pack_dtls_in_stun_ack(data: list[int]) -> bytes:
+    if len(data) > 4:
+        raise ValueError("Too many arguments")
+    if any(map(lambda x: x < 0 or x > 2**32, data)):
+        raise ValueError("Invalid argument")
+    return pack("<" + "I" * len(data), *data)
+
+
+def unpack_dtls_in_stun_ack(data: bytes) -> list[int]:
+    if len(data) % 4 != 0:
+        raise ValueError("Invalid length")
+    return unpack("<" + "I" * (len(data) // 4), data)
+
+
 AttributeEntry = tuple[int, str, Callable, Callable]
 
 ATTRIBUTES: list[AttributeEntry] = [
@@ -177,6 +191,13 @@ ATTRIBUTES: list[AttributeEntry] = [
     (0x0020, "XOR-MAPPED-ADDRESS", pack_xor_address, unpack_xor_address),
     (0x0024, "PRIORITY", pack_unsigned, unpack_unsigned),
     (0x0025, "USE-CANDIDATE", pack_none, unpack_none),
+    (0xC070, "META-DTLS-IN-STUN", pack_string, unpack_string),
+    (
+        0xC071,
+        "META-DTLS-IN-STUN-ACKNOWLEDGEMENT",
+        pack_dtls_in_stun_ack,
+        unpack_dtls_in_stun_ack,
+    ),
     (0x8022, "SOFTWARE", pack_string, unpack_string),
     (0x8028, "FINGERPRINT", pack_unsigned, unpack_unsigned),
     (0x8029, "ICE-CONTROLLED", pack_unsigned_64, unpack_unsigned_64),

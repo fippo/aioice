@@ -228,6 +228,24 @@ class MessageTest(unittest.TestCase):
             stun.parse_message(bytes(20))
         self.assertEqual(str(cm.exception), "0 is not a valid Method")
 
+    def test_message_with_dtls_in_stun(self) -> None:
+        request = stun.Message(
+            message_method=stun.Method.BINDING, message_class=stun.Class.REQUEST
+        )
+        request.attributes["META-DTLS-IN-STUN"] = "Hello DTLS in STUN"
+        request.attributes["META-DTLS-IN-STUN-ACKNOWLEDGEMENT"] = (1, 4294967295)
+
+        message = stun.parse_message(bytes(request))
+        self.assertEqual(
+            message.attributes,
+            OrderedDict(
+                [
+                    ("META-DTLS-IN-STUN", "Hello DTLS in STUN"),
+                    ("META-DTLS-IN-STUN-ACKNOWLEDGEMENT", (1, 4294967295)),
+                ]
+            ),
+        )
+
 
 class TransactionTest(unittest.TestCase):
     def setUp(self) -> None:
